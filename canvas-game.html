@@ -1,0 +1,141 @@
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        document.body.appendChild(canvas);
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        ctx.fillStyle = 'lightblue';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const keyboard = {};
+        let enemies = [];
+
+        for (let i = 0; i < 10; ++i) {
+            enemies.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: Math.random() * 15 * (Math.random() > 0.5 ? 1 : -1),
+                vy: Math.random() * 15 * (Math.random() > 0.5 ? 1 : -1),
+                size: Math.random() * 50 + 50
+            });
+        }
+
+        let coins = [];
+
+        for (let i = 0; i < 10; ++i) {
+            coins.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: Math.random() * 15 * (Math.random() > 0.5 ? 1 : -1),
+                vy: Math.random() * 15 * (Math.random() > 0.5 ? 1 : -1),
+                size: 50
+            });
+        }
+
+        player = {
+            x: 0,
+            y: 0,
+            vx: 10,
+            vy: 10,
+            size: 50,
+            score: 0
+        };
+
+        function render() {
+            requestAnimationFrame(render);
+            ctx.fillStyle = 'lightblue';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            coins.forEach(coin => {
+                ctx.fillStyle = 'lightyellow';
+                ctx.beginPath();
+                ctx.arc(coin.x, coin.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = 'yellow';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+            });
+
+            ctx.fillStyle = 'red';
+            enemies.forEach(enemy => {
+                ctx.fillRect(enemy.x - enemy.size / 2, enemy.y - enemy.size / 2, enemy.size / 2, enemy.size / 2)
+                enemy.x += enemy.vx;
+                enemy.y += enemy.vy;
+                if (enemy.x > canvas.width || enemy.x < 0) enemy.vx *= -1;
+                if (enemy.y > canvas.height || enemy.y < 0) enemy.vy *= -1;
+            });
+
+            if (keyboard.a && player.x > 0) player.x -= player.vx;
+            if (keyboard.d && player.x < canvas.width) player.x += player.vx;
+            if (keyboard.w && player.y > 0) player.y -= player.vy;
+            if (keyboard.s && player.y < canvas.height) player.y += player.vy;
+
+            let enemyCollission = false;
+
+            enemies.forEach(enemy => {
+                if (intersect(player, enemy)) enemyCollission = true;
+            });
+
+            coins.forEach((coin, index, array) => {
+                if (intersect(player, coin)) {
+                    player.score += 10;
+                    array.splice(index, 1);
+                    array.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        vx: Math.random() * 15 * (Math.random() > 0.5 ? 1 : -1),
+                        vy: Math.random() * 15 * (Math.random() > 0.5 ? 1 : -1),
+                        size: 50
+                    });
+                }
+            });
+
+            ctx.fillStyle = 'black'
+            ctx.font = '30px Helvetica'
+            ctx.fillText(`Score: ${player.score}`, 30, 40)
+
+            if(enemyCollission) {
+                player.score = 0;
+                player.x = 0;
+                player.y = 0;
+            }
+
+            ctx.fillStyle = enemyCollission ? 'cyan' : 'blue';
+            ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+        }
+
+        function intersect(player, enemy) {
+            return (Math.abs(player.x - enemy.x) * 2 < (player.size / 2 + enemy.size / 2)) &&
+                (Math.abs(player.y - enemy.y) * 2 < (player.size / 2 + enemy.size / 2));
+        }
+
+        requestAnimationFrame(render);
+
+        document.addEventListener('keydown', event => keyboard[event.key] = true);
+        document.addEventListener('keyup', event => keyboard[event.key] = false);
+
+
+    </script>
+</body>
+
+</html>
