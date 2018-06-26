@@ -1,0 +1,19 @@
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <script>
+        let username = prompt('Who are you?');
+        const socket = io();
+
+        socket.on('msg_receive', function (user, message) {
+            console.log(`${user}: ${message}`);
+        });
+
+        function sendMessage(message) {
+            socket.emit('msg', username, message);
+        }
+
+    </script>
+</body>

@@ -1,0 +1,112 @@
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <script>
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        document.body.appendChild(canvas);
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        ctx.fillStyle = 'lightblue';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let state;
+        let myPlayer;
+
+        function render() {
+            requestAnimationFrame(render);
+            ctx.fillStyle = 'lightblue';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save()
+
+            ctx.translate(
+                canvas.width / 2 - myPlayer.x,
+                canvas.height / 2 - myPlayer.y
+            )
+
+            const { players, enemies, coins } = state;
+
+            coins.forEach(coin => {
+                ctx.fillStyle = 'lightyellow';
+                ctx.beginPath();
+                ctx.arc(coin.x, coin.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = 'yellow';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+            });
+
+            ctx.fillStyle = 'red';
+            enemies.forEach(enemy => ctx.fillRect(enemy.x - enemy.size / 2, enemy.y - enemy.size / 2, enemy.size / 2, enemy.size / 2));
+
+            players.forEach(player => {
+                if (!player.dead) {
+                    ctx.fillStyle = (player === myPlayer) ? 'blue' : 'green'
+                    ctx.fillRect(player.x - player.size / 2,
+                        player.y - player.size / 2,
+                        player.size,
+                        player.size)
+                }
+            });
+
+            ctx.restore();
+
+            ctx.fillStyle = 'black'
+            ctx.font = '30px Helvetica'
+            ctx.fillText(`Score: ${myPlayer.score}`, 30, 40)
+        }
+
+        function intersect(player, enemy) {
+            return (Math.abs(player.x - enemy.x) * 2 < (player.size / 2 + enemy.size / 2)) &&
+                (Math.abs(player.y - enemy.y) * 2 < (player.size / 2 + enemy.size / 2));
+        }
+
+        requestAnimationFrame(render);
+
+        const keyboard = {};
+        const mapping = {
+            a: 'left',
+            d: 'right',
+            w: 'up',
+            s: 'down'
+        };
+
+        document.addEventListener('keydown', function (event) {
+            keyboard[mapping[event.key]] = true;
+            socket.emit('input', keyboard);
+        });
+
+        document.addEventListener('keyup', function (event) {
+            keyboard[mapping[event.key]] = false;
+            socket.emit('input', keyboard);
+        });
+
+        const socket = io();
+        socket.on('state', function (newState) {
+            state = newState;
+            myPlayer = state.players.find(player => player.id === socket.id);
+        });
+
+    </script>
+</body>
+
+</html>

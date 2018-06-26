@@ -65,6 +65,13 @@
             ctx.fillStyle = 'lightblue';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            ctx.save()
+
+            ctx.translate(
+                canvas.width / 2 - player.x,
+                canvas.height / 2 - player.y
+            )
+
             coins.forEach(coin => {
                 ctx.fillStyle = 'lightyellow';
                 ctx.beginPath();
@@ -85,10 +92,10 @@
                 if (enemy.y > canvas.height || enemy.y < 0) enemy.vy *= -1;
             });
 
-            if (keyboard.a && player.x > 0) player.x -= player.vx;
-            if (keyboard.d && player.x < canvas.width) player.x += player.vx;
-            if (keyboard.w && player.y > 0) player.y -= player.vy;
-            if (keyboard.s && player.y < canvas.height) player.y += player.vy;
+            if (keyboard.a) player.x -= player.vx;
+            if (keyboard.d) player.x += player.vx;
+            if (keyboard.w) player.y -= player.vy;
+            if (keyboard.s) player.y += player.vy;
 
             let enemyCollission = false;
 
@@ -110,11 +117,7 @@
                 }
             });
 
-            ctx.fillStyle = 'black'
-            ctx.font = '30px Helvetica'
-            ctx.fillText(`Score: ${player.score}`, 30, 40)
-
-            if(enemyCollission) {
+            if (enemyCollission) {
                 player.score = 0;
                 player.x = 0;
                 player.y = 0;
@@ -122,6 +125,12 @@
 
             ctx.fillStyle = enemyCollission ? 'cyan' : 'blue';
             ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+            
+            ctx.restore();
+
+            ctx.fillStyle = 'black'
+            ctx.font = '30px Helvetica'
+            ctx.fillText(`Score: ${player.score}`, 30, 40)
         }
 
         function intersect(player, enemy) {
