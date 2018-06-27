@@ -14,14 +14,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 const GLOBAL_WIDTH = 2000;
 const GLOBAL_HEIGHT = 1000;
 
-const state = {
+let state = {
     players: [],
     enemies: [],
     coins: []
 };
 
 function reset() {
-    const { players, enemies, coins } = state;
+
+    state.enemies = [];
+    state.coins = [];
+
+    let { players, enemies, coins } = state;
 
     players.forEach(player => {
         player.x = Math.random() * GLOBAL_WIDTH
@@ -56,7 +60,7 @@ reset();
 function logic() {
     setTimeout(logic, 20);
 
-    const { players, enemies, coins } = state;
+    let { players, enemies, coins } = state;
 
     enemies.forEach(enemy => {
         enemy.x += enemy.vx;
