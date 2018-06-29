@@ -13,7 +13,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const GLOBAL_WIDTH = 1500;
 const GLOBAL_HEIGHT = 1000;
-const sprites = ['att5.png', 'F5S2.png', 'smallorange.png', 'wship-4.png'];
+const sprites = [
+    { sprite: 'att5.png', inUse: false },
+    { sprite: 'F5S2.png', inUse: false },
+    { sprite: 'smallorange.png', inUse: false },
+    { sprite: 'wship-4.png', inUse: false }
+];
 const speed = 10;
 let state = {
     players: [],
@@ -242,13 +247,15 @@ io.on('connection', socket => {
     socket.emit('init', GLOBAL_WIDTH, GLOBAL_HEIGHT, state.players.length < 4, Date.now());
 
     if (state.players.length < 4) {
+        let sprite = sprites.find(s => !s.inUse);
+        sprite.inUse = true;
         state.players.push({
             id: socket.id,
             life: 100,
             score: 0,
             x: GLOBAL_WIDTH / 10,
             y: Math.random() * GLOBAL_HEIGHT,
-            sprite: sprites[state.players.length],
+            sprite: sprite.sprite,
             dead: false,
             keyboard: {},
             cd: 0,
@@ -265,5 +272,18 @@ io.on('connection', socket => {
         state.players.forEach((player, index, array) => {
             if (player.id === socket.id) array[index].keyboard = keyboard;
         });
+    });
+
+    socket.on('disconnect', function () {
+        let index = state.players.findIndex(p => p.id === socket.id);
+        if (index >= 0) {
+            let sprite = sprites.find(s => s.sprite === state.players[index].sprite)
+            sprite.inUse = false;
+            state.players.splice(index, 1);
+        }
+        else {
+            index = state.observers.findIndex(o => o.id === socket.id);
+            if (index >= 0) state.observers.splice(index, 1);
+        }
     });
 });
