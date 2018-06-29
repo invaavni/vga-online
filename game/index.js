@@ -33,10 +33,11 @@ function reset() {
         sizeY: 150,
         cd: 0,
         cd_mov: 0,
-        asteroid: 5000,
+        asteroid: 2000,
         dir: 1,
         life: 500
     }
+    state.asteroids = [];
 }
 
 reset();
@@ -81,9 +82,10 @@ function logic() {
             sizeY: 50,
             x: Math.random() * GLOBAL_WIDTH,
             y: Math.random() * GLOBAL_HEIGHT,
-            sprite: '1346943991.png'
+            sprite: '1346943991.png',
+            cd: 60000
         });
-        enemy.asteroid = 5000;
+        enemy.asteroid = 2000;
     }
 
     if (enemy.y <= 0) enemy.y = 1;
@@ -132,6 +134,8 @@ function logic() {
                 }
             }
         });
+        aster.cd -= 20;
+        if (aster.cd <= 0) array.splice(index, 1);
     });
 
     shoots.forEach((shoot, index, array) => {
@@ -191,13 +195,20 @@ function logic() {
                 }
             });
         }
+
+        asteroids.forEach((aster, i, a) => {
+            if (intersect(aster, shoot)) {
+                a.splice(i, 1);
+                array.splice(index, 1);
+            }
+        });
     });
 
     players.forEach(player => {
         if (player.keyboard.left && player.x > speed - 1) player.x -= speed;
         if (player.keyboard.right && player.x < GLOBAL_WIDTH - 200) player.x += speed;
         if (player.keyboard.up && player.y > speed - 1) player.y -= speed;
-        if (player.keyboard.down && player.y < GLOBAL_HEIGHT - 100) player.y += speed;
+        if (player.keyboard.down && player.y < GLOBAL_HEIGHT) player.y += speed;
         if (player.keyboard.shoot && player.cd === 0) {
             player.cd = 500;
             shoots.push({
