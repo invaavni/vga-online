@@ -138,7 +138,7 @@ function logic() {
         shoot.x += shoot.vx;;
         if (shoot.x > GLOBAL_WIDTH || shoot.x < 0) array.splice(index, 1);
         if (!enemy.dead && shoot.author !== 'enemy' && intersect(shoot, enemy) && enemy.life > 0) {
-            enemy.life += enemy.life > shoot.damage ? -1 * shoot.damage : 0;
+            enemy.life += enemy.life >= shoot.damage ? -1 * shoot.damage : 0;
             array.splice(index, 1);
 
             if (enemy.life === 0) {
