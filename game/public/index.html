@@ -1,0 +1,122 @@
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://rawgit.com/dasilvacontin/Eximo.js/master/Eximo.js"></script>
+</head>
+
+<body>
+    <script>
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        document.body.appendChild(canvas);
+
+        let state;
+        let myPlayer = {};
+        let keyboard = {};
+        const mapping = {
+            a: 'left',
+            d: 'right',
+            w: 'up',
+            s: 'down',
+            e: 'shoot'
+        };
+        let deltaClock;
+        let ping;
+        const logic_interval = 20;
+
+        function render() {
+            requestAnimationFrame(render);
+            if (state == null) return
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const { players, shoots, enemy, asteroids } = state;
+
+            if (!enemy.dead) {
+                Eximo.drawSprite(enemy.sprite, ctx, enemy.x - enemy.sizeX / 2, enemy.y - enemy.sizeY / 2, enemy.sizeX, enemy.sizeY);
+                ctx.fillStyle = 'red';
+                ctx.font = '30px Helvetica';
+                ctx.fillText(`HP: ${enemy.life}`, enemy.x - 50, enemy.y - 75);
+            } else {
+                ctx.fillStyle = 'white';
+                ctx.font = '70px Helvetica';
+                ctx.fillText('YOU WON!!!', canvas.width / 2, canvas.height / 2);
+            }
+
+            asteroids.forEach(aster => Eximo.drawSprite(aster.sprite, ctx, aster.x - aster.sizeX / 2, aster.y - aster.sizeY / 2, aster.sizeX, aster.sizeY));
+
+            shoots.forEach(shoot => {
+                if (shoot.author === myPlayer.id) ctx.fillStyle = 'blue';
+                else if (shoot.author === 'enemy') ctx.fillStyle = 'red';
+                else ctx.fillStyle = 'green';
+                ctx.fillRect(shoot.x, shoot.y, shoot.sizeX, shoot.sizeY);
+            });
+
+            players.forEach(player => {
+                Eximo.drawSprite(player.sprite, ctx, player.x - player.sizeX / 2, player.y - player.sizeY / 2, player.sizeX, player.sizeY);
+                ctx.fillStyle = 'green';
+                if (player.id === myPlayer.id) ctx.fillStyle = 'blue';
+                ctx.font = '30px Helvetica';
+                ctx.fillText(`HP: ${player.life}`, player.x - 50, player.y - 50);
+            });
+
+            ctx.fillStyle = 'white';
+            ctx.font = '30px Helvetica';
+            ctx.fillText(`Your turn: ${myTurn}`, canvas.width - 300, 50);
+        }
+
+        Eximo.loadSpriteSheet('spaceships.json', render)
+
+        function intersect(player, enemy) {
+            return (Math.abs(player.x - enemy.x) * 2 < (player.size / 2 + enemy.size / 2)) &&
+                (Math.abs(player.y - enemy.y) * 2 < (player.size / 2 + enemy.size / 2));
+        }
+
+        requestAnimationFrame(render);
+
+        const socket = io();
+
+        document.addEventListener('keydown', function (event) {
+            keyboard[mapping[event.key]] = true;
+            socket.emit('input', keyboard);
+        });
+
+        document.addEventListener('keyup', function (event) {
+            keyboard[mapping[event.key]] = false;
+            socket.emit('input', keyboard);
+        });
+
+        const init_timestamp = Date.now()
+        socket.on('init', function (width, height, server_timestamp) {
+            canvas.width = width;
+            canvas.height = height;
+            ping = (Date.now() - init_timestamp) / 2;
+            deltaClock = server_timestamp + ping - Date.now();
+
+            ctx.fillStyle = 'lightblue';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+
+        socket.on('state', function (newState) {
+            state = newState;
+            myPlayer = state.players.find(player => player.id === socket.id);
+            if (!myPlayer) myPlayer = {};
+            myTurn = state.observers.findIndex(obs => obs.id === socket.id) + 1;
+        });
+
+    </script>
+</body>
+
+</html>
